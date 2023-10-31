@@ -8,13 +8,23 @@ from PIL.Image import Image as PilImage
 
 logger = get_logger(__name__)
 
-_DESCRIPTION = ""
+_DESCRIPTION = (
+    "A New Dataset and Benchmark for Content-aware Visual-Textual Presentation Layout"
+)
 
-_CITATION = ""
+_CITATION = """\
+@inproceedings{hsu2023posterlayout,
+  title={PosterLayout: A New Benchmark and Approach for Content-aware Visual-Textual Presentation Layout},
+  author={Hsu, Hsiao Yuan and He, Xiangteng and Peng, Yuxin and Kong, Hao and Zhang, Qing},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={6018--6026},
+  year={2023}
+}
+"""
 
-_HOMEPAGE = ""
+_HOMEPAGE = "http://59.108.48.34/tiki/PosterLayout/"
 
-_LICENSE = ""
+_LICENSE = "Images in PKU PosterLayout are distributed under the CC BY-SA 4.0 license."
 
 
 class TrainPoster(TypedDict):
