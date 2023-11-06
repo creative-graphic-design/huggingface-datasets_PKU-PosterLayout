@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import List, TypedDict, Union
 
@@ -56,6 +57,9 @@ class DatasetUrls(TypedDict):
     test: TestDataset
 
 
+# The author of this loading script has uploaded the poster image and saliency maps to the HuggingFace's private repository to facilitate testing.
+# If you are using this loading script, please download the annotations from the appropriate channels, such as the OneDrive link provided by the Magazine dataset's author.
+# (To the author of Magazine dataset, if there are any issues regarding this matter, please contact us. We will address it promptly.)
 _URLS: DatasetUrls = {
     "train": {
         "poster": {
@@ -136,8 +140,61 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
             features=features,
         )
 
+    @property
+    def _manual_download_instructions(self) -> str:
+        return (
+            "To use PKU-PosterLayout dataset, you need to download the poster image "
+            "and saliency maps via [PKU Netdisk](https://disk.pku.edu.cn/link/999C6E97BB354DF8AD0F9E1F9003BE05) "
+            "or [Google Drive](https://drive.google.com/drive/folders/1Gk202RVs9Qy2zbJUNeurC1CaQYNU-Vuv?usp=share_link)."
+        )
+
+    def _download_from_hf(self, dl_manager: ds.DownloadManager) -> DatasetUrls:
+        return dl_manager.download_and_extract(_URLS)
+
+    def _download_from_local(self, dl_manager: ds.DownloadManager) -> DatasetUrls:
+        assert dl_manager.manual_dir is not None, dl_manager.manual_dir
+        dir_path = os.path.expanduser(dl_manager.manual_dir)
+        
+        tng_dir_path = os.path.join(dir_path, "train")
+        tst_dir_path = os.path.join(dir_path, "test")
+
+        if not os.path.exists(dir_path):
+            raise FileNotFoundError(
+                "Make sure you have downloaded and placed the PKU-PosterLayout dataset correctly. "
+                'Furthermore, you shoud check that a manual dir via `datasets.load_dataset("shunk031/PKU-PosterLayout", data_dir=...)` '
+                "that include zip files from the downloaded files. "
+                f"Manual downloaded instructions: {self._manual_download_instructions}"
+            )
+        return dl_manager.extract(
+            path_or_paths={
+                "train": {
+                    "poster": {
+                        "original": os.path.join(tng_dir_path, "inpainted_poster.zip"),
+                        "inpainted": os.path.join(tng_dir_path, "inpainted_poster.zip"),
+                    },
+                    "saliency_maps": {
+                        "pfpn": os.path.join(tng_dir_path, "saliencymaps_pfpn.zip"),
+                        "basnet": os.path.join(tng_dir_path, "saliencymaps_basnet.zip"),
+                    },
+                },
+                "test": {
+                    "poster": {
+                        "canvas": os.path.join(tst_dir_path, "image_canvas.zip"),
+                    },
+                    "saliency_maps": {
+                        "pfpn": os.path.join(tst_dir_path, "salieycmaps_pfpn.zip"),
+                        "basnet": os.path.join(tst_dir_path, "saliencymaps_basnet.zip"),
+                    },
+                },
+            }
+        )
+
     def _split_generators(self, dl_manager: ds.DownloadManager):
-        file_paths: DatasetUrls = dl_manager.download_and_extract(_URLS)
+        file_paths = (
+            self._download_from_hf(dl_manager)
+            if dl_manager.download_config.token
+            else self._download_from_local(dl_manager)
+        )
 
         tng_files = file_paths["train"]
         tst_files = file_paths["test"]
