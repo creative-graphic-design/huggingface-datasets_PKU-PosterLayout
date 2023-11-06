@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import List, TypedDict, Union
+from typing import List, TypedDict, Union, cast
 
 import datasets as ds
 from datasets.utils.logging import get_logger
@@ -269,11 +269,11 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
     ):
         if "original" in poster and "inpainted" in poster:
             yield from self._generate_train_examples(
-                poster=poster, saliency_maps=saliency_maps
+                poster=cast(TrainPoster, poster), saliency_maps=saliency_maps
             )
         elif "canvas" in poster:
             yield from self._generate_test_examples(
-                poster=poster, saliency_maps=saliency_maps
+                poster=cast(TestPoster, poster), saliency_maps=saliency_maps
             )
         else:
             raise ValueError("Invalid dataset")
