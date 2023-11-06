@@ -11,9 +11,10 @@ multilinguality: []
 pretty_name: PKU-PosterLayout
 size_categories: []
 source_datasets:
-- extended
+- extended|Poster-Erase
 tags:
 - layout-generation
+- graphic design
 task_categories:
 - other
 task_ids: []
