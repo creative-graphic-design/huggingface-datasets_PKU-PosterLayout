@@ -154,7 +154,7 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
     def _download_from_local(self, dl_manager: ds.DownloadManager) -> DatasetUrls:
         assert dl_manager.manual_dir is not None, dl_manager.manual_dir
         dir_path = os.path.expanduser(dl_manager.manual_dir)
-        
+
         tng_dir_path = os.path.join(dir_path, "train")
         tst_dir_path = os.path.join(dir_path, "test")
 
