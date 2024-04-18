@@ -14,6 +14,7 @@ source_datasets:
 - extended
 tags:
 - layout-generation
+- graphic-design
 task_categories:
 - other
 task_ids: []
@@ -77,28 +78,10 @@ The language data in PKU-PosterLayout is in Chinese ([BCP-47 zh](https://www.rfc
 
 ### Data Instances
 
-To use PKU-PosterLayout dataset, you need to download the poster image and saliency maps via [PKU Netdisk](https://disk.pku.edu.cn/link/999C6E97BB354DF8AD0F9E1F9003BE05) or [Google Drive](https://drive.google.com/drive/folders/1Gk202RVs9Qy2zbJUNeurC1CaQYNU-Vuv?usp=share_link).
-
-```
-/path/to/datasets
-├── train
-│   ├── inpainted_poster.zip
-│   ├── original_poster.zip
-│   ├── saliencymaps_basnet.zip
-│   └── saliencymaps_pfpn.zip
-└── test
-    ├── image_canvas.zip
-    ├── saliencymaps_basnet.zip
-    └── saliencymaps_pfpn.zip
-```
-
 ```python
 import datasets as ds
 
-dataset = ds.load_dataset(
-    path="shunk031/PKU-PosterLayout",
-    data_dir="/path/to/datasets/",
-)
+dataset = ds.load_dataset("creative-graphic-design/PKU-PosterLayout")
 ```
 
 ### Data Fields

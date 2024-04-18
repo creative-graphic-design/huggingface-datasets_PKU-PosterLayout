@@ -1,8 +1,9 @@
-import os
+import ast
 import pathlib
-from typing import List, TypedDict, Union, cast
+from typing import List, Optional, TypedDict, Union, cast
 
 import datasets as ds
+import pandas as pd
 from datasets.utils.logging import get_logger
 from PIL import Image
 from PIL.Image import Image as PilImage
@@ -52,9 +53,14 @@ class TestDataset(TypedDict):
     saliency_maps: SaliencyMaps
 
 
+class Annotation(TypedDict):
+    train: str
+
+
 class DatasetUrls(TypedDict):
     train: TrainDataset
     test: TestDataset
+    annotation: Annotation
 
 
 # The author of this loading script has uploaded the poster image and saliency maps to the HuggingFace's private repository to facilitate testing.
@@ -63,22 +69,25 @@ class DatasetUrls(TypedDict):
 _URLS: DatasetUrls = {
     "train": {
         "poster": {
-            "original": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/train/original_poster.zip",
-            "inpainted": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/train/inpainted_poster.zip",
+            "original": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/train/original_poster.zip",
+            "inpainted": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/train/inpainted_poster.zip",
         },
         "saliency_maps": {
-            "pfpn": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/train/saliencymaps_pfpn.zip",
-            "basnet": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/train/saliencymaps_basnet.zip",
+            "pfpn": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/train/saliencymaps_pfpn.zip",
+            "basnet": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/train/saliencymaps_basnet.zip",
         },
     },
     "test": {
         "poster": {
-            "canvas": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/test/image_canvas.zip",
+            "canvas": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/test/image_canvas.zip",
         },
         "saliency_maps": {
-            "pfpn": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/test/saliencymaps_pfpn.zip",
-            "basnet": "https://huggingface.co/datasets/shunk031/PKU-PosterLayout-private/resolve/main/test/saliencymaps_basnet.zip",
+            "pfpn": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/test/saliencymaps_pfpn.zip",
+            "basnet": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/test/saliencymaps_basnet.zip",
         },
+    },
+    "annotation": {
+        "train": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/raw/main/annotations/train_csv_9973.csv",
     },
 }
 
@@ -130,6 +139,14 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
                 "basnet_saliency_map": ds.Image(),
                 "pfpn_saliency_map": ds.Image(),
                 "canvas": ds.Image(),
+                "annotations": ds.Sequence(
+                    {
+                        "poster_path": ds.Value("string"),
+                        "total_elem": ds.Value("int32"),
+                        "cls_elem": ds.Value("int32"),
+                        "box_elem": ds.Sequence(ds.Value("int32")),
+                    }
+                ),
             }
         )
         return ds.DatasetInfo(
@@ -140,75 +157,24 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
             features=features,
         )
 
-    @property
-    def _manual_download_instructions(self) -> str:
-        return (
-            "To use PKU-PosterLayout dataset, you need to download the poster image "
-            "and saliency maps via [PKU Netdisk](https://disk.pku.edu.cn/link/999C6E97BB354DF8AD0F9E1F9003BE05) "
-            "or [Google Drive](https://drive.google.com/drive/folders/1Gk202RVs9Qy2zbJUNeurC1CaQYNU-Vuv?usp=share_link)."
-        )
-
-    def _download_from_hf(self, dl_manager: ds.DownloadManager) -> DatasetUrls:
-        return dl_manager.download_and_extract(_URLS)
-
-    def _download_from_local(self, dl_manager: ds.DownloadManager) -> DatasetUrls:
-        assert dl_manager.manual_dir is not None, dl_manager.manual_dir
-        dir_path = os.path.expanduser(dl_manager.manual_dir)
-
-        tng_dir_path = os.path.join(dir_path, "train")
-        tst_dir_path = os.path.join(dir_path, "test")
-
-        if not os.path.exists(dir_path):
-            raise FileNotFoundError(
-                "Make sure you have downloaded and placed the PKU-PosterLayout dataset correctly. "
-                'Furthermore, you shoud check that a manual dir via `datasets.load_dataset("shunk031/PKU-PosterLayout", data_dir=...)` '
-                "that include zip files from the downloaded files. "
-                f"Manual downloaded instructions: {self._manual_download_instructions}"
-            )
-        return dl_manager.extract(
-            path_or_paths={
-                "train": {
-                    "poster": {
-                        "original": os.path.join(tng_dir_path, "inpainted_poster.zip"),
-                        "inpainted": os.path.join(tng_dir_path, "inpainted_poster.zip"),
-                    },
-                    "saliency_maps": {
-                        "pfpn": os.path.join(tng_dir_path, "saliencymaps_pfpn.zip"),
-                        "basnet": os.path.join(tng_dir_path, "saliencymaps_basnet.zip"),
-                    },
-                },
-                "test": {
-                    "poster": {
-                        "canvas": os.path.join(tst_dir_path, "image_canvas.zip"),
-                    },
-                    "saliency_maps": {
-                        "pfpn": os.path.join(tst_dir_path, "salieycmaps_pfpn.zip"),
-                        "basnet": os.path.join(tst_dir_path, "saliencymaps_basnet.zip"),
-                    },
-                },
-            }
-        )
-
     def _split_generators(self, dl_manager: ds.DownloadManager):
-        file_paths = (
-            self._download_from_hf(dl_manager)
-            if dl_manager.download_config.token
-            else self._download_from_local(dl_manager)
-        )
+        file_paths = dl_manager.download_and_extract(_URLS)
 
-        tng_files = file_paths["train"]
-        tst_files = file_paths["test"]
+        tng_files = file_paths["train"]  # type: ignore
+        tst_files = file_paths["test"]  # type: ignore
+        ann_file = file_paths["annotation"]  # type: ignore
 
         return [
             ds.SplitGenerator(
-                name=ds.Split.TRAIN,
+                name=ds.Split.TRAIN,  # type: ignore
                 gen_kwargs={
                     "poster": tng_files["poster"],
                     "saliency_maps": tng_files["saliency_maps"],
+                    "annotation": ann_file["train"],
                 },
             ),
             ds.SplitGenerator(
-                name=ds.Split.TEST,
+                name=ds.Split.TEST,  # type: ignore
                 gen_kwargs={
                     "poster": tst_files["poster"],
                     "saliency_maps": tst_files["saliency_maps"],
@@ -217,8 +183,14 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
         ]
 
     def _generate_train_examples(
-        self, poster: TrainPoster, saliency_maps: SaliencyMaps
+        self,
+        poster: TrainPoster,
+        saliency_maps: SaliencyMaps,
+        annotation: str,
     ):
+        ann_df = pd.read_csv(annotation)
+        ann_df = ann_df.assign(box_elem=ann_df["box_elem"].apply(ast.literal_eval))
+
         poster_files = get_original_poster_files(base_dir=poster["original"])
         inpainted_files = get_inpainted_poster_files(base_dir=poster["inpainted"])
 
@@ -239,12 +211,19 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
             basnet_map_path,
             pfpn_map_path,
         ) in enumerate(it):
+
+            poster_path = f"train/{original_poster_path.name}"
+            poster_anns = ann_df[ann_df["poster_path"] == poster_path]
+
+            annotations = poster_anns.to_dict(orient="records")
+
             yield i, {
                 "original_poster": load_image(original_poster_path),
                 "inpainted_poster": load_image(inpainted_poster_path),
                 "basnet_saliency_map": load_image(basnet_map_path),
                 "pfpn_saliency_map": load_image(pfpn_map_path),
                 "canvas": None,
+                "annotations": annotations,
             }
 
     def _generate_test_examples(self, poster: TestPoster, saliency_maps: SaliencyMaps):
@@ -262,18 +241,27 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
                 "basnet_saliency_map": load_image(basnet_map_path),
                 "pfpn_saliency_map": load_image(pfpn_map_path),
                 "canvas": load_image(canvas_path),
+                "annotations": None,
             }
 
     def _generate_examples(
-        self, poster: Union[TrainPoster, TestPoster], saliency_maps: SaliencyMaps
+        self,
+        poster: Union[TrainPoster, TestPoster],
+        saliency_maps: SaliencyMaps,
+        annotation: Optional[str] = None,
     ):
         if "original" in poster and "inpainted" in poster:
+            assert annotation is not None
+
             yield from self._generate_train_examples(
-                poster=cast(TrainPoster, poster), saliency_maps=saliency_maps
+                poster=cast(TrainPoster, poster),
+                saliency_maps=saliency_maps,
+                annotation=annotation,
             )
         elif "canvas" in poster:
             yield from self._generate_test_examples(
-                poster=cast(TestPoster, poster), saliency_maps=saliency_maps
+                poster=cast(TestPoster, poster),
+                saliency_maps=saliency_maps,
             )
         else:
             raise ValueError("Invalid dataset")
