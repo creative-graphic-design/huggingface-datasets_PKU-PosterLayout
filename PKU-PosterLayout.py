@@ -143,7 +143,9 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
                     {
                         "poster_path": ds.Value("string"),
                         "total_elem": ds.Value("int32"),
-                        "cls_elem": ds.Value("int32"),
+                        "cls_elem": ds.ClassLabel(
+                            num_classes=4, names=["text", "logo", "underlay", "INVALID"]
+                        ),
                         "box_elem": ds.Sequence(ds.Value("int32")),
                     }
                 ),
@@ -189,7 +191,24 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
         annotation: str,
     ):
         ann_df = pd.read_csv(annotation)
-        ann_df = ann_df.assign(box_elem=ann_df["box_elem"].apply(ast.literal_eval))
+
+        ann_df = ann_df.assign(
+            # Convert string to list
+            box_elem=ann_df["box_elem"].apply(ast.literal_eval),
+            # Since PKU's label is 1-indexed, we need to convert it to 0-indexed
+            cls_elem=ann_df["cls_elem"] - 1,
+        )
+        ann_df = ann_df.assign(
+            cls_elem=ann_df["cls_elem"].replace(
+                #
+                # Convert class index to class name.
+                #
+                # The index = -1 produced by the conversion from 1-indexed to 0-indexed
+                # is treated here as an INVALID class.
+                #
+                {-1: "INVALID", 0: "text", 1: "logo", 2: "underlay"}
+            )
+        )
 
         poster_files = get_original_poster_files(base_dir=poster["original"])
         inpainted_files = get_inpainted_poster_files(base_dir=poster["inpainted"])
@@ -211,20 +230,22 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
             basnet_map_path,
             pfpn_map_path,
         ) in enumerate(it):
-
             poster_path = f"train/{original_poster_path.name}"
             poster_anns = ann_df[ann_df["poster_path"] == poster_path]
 
             annotations = poster_anns.to_dict(orient="records")
 
-            yield i, {
-                "original_poster": load_image(original_poster_path),
-                "inpainted_poster": load_image(inpainted_poster_path),
-                "basnet_saliency_map": load_image(basnet_map_path),
-                "pfpn_saliency_map": load_image(pfpn_map_path),
-                "canvas": None,
-                "annotations": annotations,
-            }
+            yield (
+                i,
+                {
+                    "original_poster": load_image(original_poster_path),
+                    "inpainted_poster": load_image(inpainted_poster_path),
+                    "basnet_saliency_map": load_image(basnet_map_path),
+                    "pfpn_saliency_map": load_image(pfpn_map_path),
+                    "canvas": None,
+                    "annotations": annotations,
+                },
+            )
 
     def _generate_test_examples(self, poster: TestPoster, saliency_maps: SaliencyMaps):
         canvas_files = get_canvas_files(base_dir=poster["canvas"])
@@ -235,14 +256,17 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
         assert len(canvas_files) == len(basnet_map_files) == len(pfpn_map_files)
         it = zip(canvas_files, basnet_map_files, pfpn_map_files)
         for i, (canvas_path, basnet_map_path, pfpn_map_path) in enumerate(it):
-            yield i, {
-                "original_poster": None,
-                "inpainted_poster": None,
-                "basnet_saliency_map": load_image(basnet_map_path),
-                "pfpn_saliency_map": load_image(pfpn_map_path),
-                "canvas": load_image(canvas_path),
-                "annotations": None,
-            }
+            yield (
+                i,
+                {
+                    "original_poster": None,
+                    "inpainted_poster": None,
+                    "basnet_saliency_map": load_image(basnet_map_path),
+                    "pfpn_saliency_map": load_image(pfpn_map_path),
+                    "canvas": load_image(canvas_path),
+                    "annotations": None,
+                },
+            )
 
     def _generate_examples(
         self,
