@@ -47,4 +47,4 @@ def test_load_dataset(
     assert dataset["train"].num_rows == expected_num_train
     assert dataset["test"].num_rows == expected_num_test
 
-    dataset.push_to_hub(repo_id=repo_id, private=True)
+    # dataset.push_to_hub(repo_id=repo_id, private=True)
