@@ -32,6 +32,13 @@ def repo_id(org_name: str, dataset_name: str) -> str:
     ),
 )
 @pytest.mark.parametrize(
+    argnames="subset_name",
+    argvalues=(
+        "default",
+        "ralf",
+    ),
+)
+@pytest.mark.parametrize(
     argnames=(
         "expected_num_train",
         "expected_num_test",
@@ -39,12 +46,35 @@ def repo_id(org_name: str, dataset_name: str) -> str:
     argvalues=((9974, 905),),
 )
 def test_load_dataset(
-    dataset_path: str, expected_num_train: int, expected_num_test, repo_id: str
+    dataset_path: str,
+    subset_name: str,
+    expected_num_train: int,
+    expected_num_test,
 ):
-    dataset = ds.load_dataset(path=dataset_path, token=True)
+    dataset = ds.load_dataset(path=dataset_path, name=subset_name, token=True)
     assert isinstance(dataset, ds.DatasetDict)
 
     assert dataset["train"].num_rows == expected_num_train
     assert dataset["test"].num_rows == expected_num_test
 
-    # dataset.push_to_hub(repo_id=repo_id, private=True)
+
+@pytest.mark.parametrize(
+    argnames="subset_name",
+    argvalues=(
+        "default",
+        "ralf",
+    ),
+)
+def test_push_to_hub(
+    repo_id: str,
+    subset_name: str,
+    dataset_path: str,
+):
+    dataset = ds.load_dataset(
+        path=dataset_path,
+        name=subset_name,
+        rename_category_names=True,
+    )
+    assert isinstance(dataset, ds.DatasetDict)
+
+    dataset.push_to_hub(repo_id=repo_id, config_name=subset_name, private=True)
