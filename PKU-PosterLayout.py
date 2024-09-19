@@ -169,19 +169,6 @@ def ralf_style_example(
     from ralfpt.transforms import has_valid_area, load_from_pku_ltrb
     from ralfpt.typehints import Element
 
-    assert len(old_saliency_maps) == len(new_saliency_maps)
-    assert len(new_saliency_maps) == len(saliency_testers)
-
-    annotations = example["annotations"]
-    # If there are no annotations, it is a test data, so return it as it is.
-    if annotations is None:
-        return example
-
-    original_image = example["original_poster"]
-    image_w, image_h = original_image.size
-
-    poster_path = annotations[0]["poster_path"]
-
     def get_pku_layout_elements(
         annotations, image_w: int, image_h: int
     ) -> List[Element]:
@@ -204,11 +191,36 @@ def ralf_style_example(
 
         return elements
 
+    assert len(old_saliency_maps) == len(new_saliency_maps)
+    assert len(new_saliency_maps) == len(saliency_testers)
+
+    annotations = example["annotations"]
+    is_test = annotations is None
+
     #
     # Remove the old saliency maps
     #
     for old_sal_map in old_saliency_maps:
         del example[old_sal_map]
+
+    # If there are no annotations, it is a test data, so return it as it is.
+    if is_test:
+        image = example["canvas"]
+
+        saliency_maps = apply_saliency_detection(
+            image=image,
+            saliency_testers=saliency_testers,  # type: ignore
+        )
+
+        for new_sal_map, sal_map in zip(new_saliency_maps, saliency_maps):
+            example[new_sal_map] = sal_map
+
+        return example
+
+    image = example["original_poster"]
+    image_w, image_h = image.size
+
+    poster_path = annotations[0]["poster_path"]
 
     #
     # Get layout elements
@@ -231,7 +243,7 @@ def ralf_style_example(
     # Apply RALF-style inpainting
     #
     inpainted_image = apply_inpainting(
-        image=original_image, elements=elements, inpainter=inpainter
+        image=image, elements=elements, inpainter=inpainter
     )
     example["inpainted_poster"] = inpainted_image
 

@@ -70,11 +70,7 @@ def test_push_to_hub(
     subset_name: str,
     dataset_path: str,
 ):
-    dataset = ds.load_dataset(
-        path=dataset_path,
-        name=subset_name,
-        rename_category_names=True,
-    )
+    dataset = ds.load_dataset(path=dataset_path, name=subset_name, token=True)
     assert isinstance(dataset, ds.DatasetDict)
 
     dataset.push_to_hub(repo_id=repo_id, config_name=subset_name, private=True)
