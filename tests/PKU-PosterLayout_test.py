@@ -58,6 +58,13 @@ def test_load_dataset(
     assert dataset["test"].num_rows == expected_num_test
 
 
+@pytest.mark.skipif(
+    condition=bool(os.environ.get("CI", False)),
+    reason=(
+        "Because this loading script downloads a large dataset, "
+        "we will skip running it on CI."
+    ),
+)
 @pytest.mark.parametrize(
     argnames="subset_name",
     argvalues=(
