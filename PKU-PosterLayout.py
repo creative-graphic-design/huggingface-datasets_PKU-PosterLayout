@@ -40,11 +40,11 @@ _DESCRIPTION = (
 
 _CITATION = """\
 @inproceedings{hsu2023posterlayout,
-  title={PosterLayout: A New Benchmark and Approach for Content-aware Visual-Textual Presentation Layout},
-  author={Hsu, Hsiao Yuan and He, Xiangteng and Peng, Yuxin and Kong, Hao and Zhang, Qing},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={6018--6026},
-  year={2023}
+    title={PosterLayout: A New Benchmark and Approach for Content-aware Visual-Textual Presentation Layout},
+    author={Hsu, Hsiao Yuan and He, Xiangteng and Peng, Yuxin and Kong, Hao and Zhang, Qing},
+    booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+    pages={6018--6026},
+    year={2023}
 }
 """
 
@@ -172,10 +172,15 @@ def ralf_style_example(
     assert len(old_saliency_maps) == len(new_saliency_maps)
     assert len(new_saliency_maps) == len(saliency_testers)
 
+    annotations = example["annotations"]
+    # If there are no annotations, it is a test data, so return it as it is.
+    if annotations is None:
+        return example
+
     original_image = example["original_poster"]
     image_w, image_h = original_image.size
 
-    poster_path = example["annotations"][0]["poster_path"]
+    poster_path = annotations[0]["poster_path"]
 
     def get_pku_layout_elements(
         annotations, image_w: int, image_h: int
