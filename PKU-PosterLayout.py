@@ -277,11 +277,15 @@ class PosterLayoutConfig(ds.BuilderConfig):
             raise ValueError("Invalid config name")
 
     def get_saliency_testers(self) -> Optional[Sequence[str]]:
-        if self.name == "ralf":
+        if self.name == "default":
+            return None
+        elif self.name == "ralf":
             return [
                 "creative-graphic-design/ISNet-general-use",
                 "creative-graphic-design/BASNet-SmartText",
             ]
+        else:
+            raise ValueError(f"Invalid config name: {self.name}")
 
     def __post_init__(self):
         super().__post_init__()
