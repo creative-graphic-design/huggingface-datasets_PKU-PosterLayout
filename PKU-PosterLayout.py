@@ -205,10 +205,8 @@ def ralf_style_example(
 
     # If there are no annotations, it is a test data, so return it as it is.
     if is_test:
-        image = example["canvas"]
-
         saliency_maps = apply_saliency_detection(
-            image=image,
+            image=example["canvas"],
             saliency_testers=saliency_testers,  # type: ignore
         )
 
