@@ -82,6 +82,10 @@ The language data in PKU-PosterLayout is in Chinese ([BCP-47 zh](https://www.rfc
 import datasets as ds
 
 dataset = ds.load_dataset("creative-graphic-design/PKU-PosterLayout")
+
+# or you can download RALF (https://arxiv.org/abs/2311.13602)-style preprocessed dataset
+dataset = ds.load_dataset("creative-graphic-design/PKU-PosterLayout", name="ralf-style")
+
 ```
 
 ### Data Fields
