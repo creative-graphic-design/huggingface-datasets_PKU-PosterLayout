@@ -35,7 +35,7 @@ def repo_id(org_name: str, dataset_name: str) -> str:
     argnames="subset_name",
     argvalues=(
         "default",
-        "ralf",
+        "ralf-style",
     ),
 )
 @pytest.mark.parametrize(
@@ -69,7 +69,7 @@ def test_load_dataset(
     argnames="subset_name",
     argvalues=(
         "default",
-        "ralf",
+        "ralf-style",
     ),
 )
 def test_push_to_hub(
@@ -81,7 +81,7 @@ def test_push_to_hub(
     dataset = ds.load_dataset(path=dataset_path, name=subset_name, token=True)
     assert isinstance(dataset, ds.DatasetDict)
 
-    if subset_name == "ralf":
+    if subset_name == "ralf-style":
         #
         # Rename `test` (with no annotation) to `no_annotation`
         #
@@ -109,9 +109,9 @@ def test_push_to_hub(
 
         # Check if the split is correct
         assert (
-            tng_dataset.num_rows == 7787
-            and val_dataset.num_rows == 973
-            and tst_dataset.num_rows == 974
+            tng_dataset.num_rows == 7979
+            and val_dataset.num_rows == 997
+            and tst_dataset.num_rows == 998
             and no_annotation_dataset.num_rows == 905
         ), dataset
 

@@ -269,7 +269,7 @@ class PosterLayoutConfig(ds.BuilderConfig):
     def get_salient_maps(self) -> Sequence[str]:
         if self.name == "default":
             return self.get_default_salieny_maps()
-        elif self.name == "ralf":
+        elif self.name == "ralf-style":
             return ["saliency_map", "saliency_map_sub"]
         else:
             raise ValueError("Invalid config name")
@@ -277,7 +277,7 @@ class PosterLayoutConfig(ds.BuilderConfig):
     def get_saliency_testers(self) -> Optional[Sequence[str]]:
         if self.name == "default":
             return None
-        elif self.name == "ralf":
+        elif self.name == "ralf-style":
             return [
                 "creative-graphic-design/ISNet-general-use",
                 "creative-graphic-design/BASNet-SmartText",
@@ -306,10 +306,11 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
     BUILDER_CONFIG_CLASS = PosterLayoutConfig
     BUILDER_CONFIGS = [
         PosterLayoutConfig(name="default", version=VERSION),
-        PosterLayoutConfig(name="ralf", version=VERSION),
+        PosterLayoutConfig(name="ralf-style", version=VERSION),
     ]
 
     def _info(self) -> ds.DatasetInfo:
+        config: PosterLayoutConfig = self.config  # type: ignore
         base_features = {
             "original_poster": ds.Image(),
             "inpainted_poster": ds.Image(),
@@ -322,8 +323,7 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
             }
             if self.config.name == "default"
             else {
-                "saliency_map": ds.Image(),
-                "saliency_map_sub": ds.Image(),
+                **{col: ds.Image() for col in config.saliency_maps},
             }
         )
         annotation_features = {
@@ -520,7 +520,7 @@ class PosterLayoutDataset(ds.GeneratorBasedBuilder):
         if config.name == "default":
             yield from _generate_default(generator)
 
-        elif config.name == "ralf":
+        elif config.name == "ralf-style":
             yield from _generate_ralf_style(generator)
 
         else:
