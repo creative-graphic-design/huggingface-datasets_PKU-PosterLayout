@@ -1,24 +1,14 @@
-[tool.poetry]
-name = "huggingface-datasets-posterlayout"
+[project]
+name = "huggingface-datasets-pku-posterlayout"
 version = "0.1.0"
-description = ""
-authors = ["Shunsuke KITADA <shunsuke.kitada.0831@gmail.com>"]
+description = "A huggingface dataset for PKU Poster-Layout [Hsu+ CVPR'23]"
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.9"
+dependencies = ["datasets[vision]>=2.0.0"]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-datasets = { extras = ["vision"], version = ">=1.0.0" }
-
-[tool.poetry.group.dev.dependencies]
-ruff = ">=0.1.5"
-pytest = ">=6.0.0"
-mypy = ">=1.0.0"
+[dependency-groups]
+dev = ["mypy>=1.0.0", "pytest>=6.0.0", "ruff>=0.1.5"]
 
 [tool.mypy]
 python_version = "3.9"
 ignore_missing_imports = true
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
