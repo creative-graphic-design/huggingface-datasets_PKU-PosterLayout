@@ -87,7 +87,7 @@ _URLS: DatasetUrls = {
         },
     },
     "annotation": {
-        "train": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/raw/main/annotations/train_csv_9973.csv",
+        "train": "https://huggingface.co/datasets/shunk031-private/PKU-PosterLayout-private/resolve/main/annotations/train_csv_9973.csv",
     },
 }
 
