@@ -41,7 +41,11 @@ def repo_id(org_name: str, dataset_name: str) -> str:
 def test_load_dataset(
     dataset_path: str, expected_num_train: int, expected_num_test, repo_id: str
 ):
-    dataset = ds.load_dataset(path=dataset_path, token=True)
+    dataset = ds.load_dataset(
+        path=dataset_path,
+        token=True,
+        # download_mode=ds.DownloadMode.FORCE_REDOWNLOAD,
+    )
     assert isinstance(dataset, ds.DatasetDict)
 
     assert dataset["train"].num_rows == expected_num_train
